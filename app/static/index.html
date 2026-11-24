@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SPL-2 Service Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4f6fb; --card: #ffffff; --ink: #1b2333; --muted: #6b7489; --line: #e3e7f0;
+  --brand: #2f5bea; --brand-ink: #ffffff; --danger: #c62f3e; --radius: 12px;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: Inter, system-ui, sans-serif; background: var(--bg); color: var(--ink); }
+header { background: linear-gradient(120deg, #1d3a9e, #2f5bea); color: #fff; padding: 28px 24px 72px; }
+header .wrap { display: flex; align-items: center; gap: 14px; }
+.logo { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,.18); display: grid; place-items: center; font-weight: 700; }
+header h1 { margin: 0; font-size: 22px; font-weight: 600; }
+header p { margin: 2px 0 0; opacity: .8; font-size: 14px; }
+.wrap { max-width: 1100px; margin: 0 auto; }
+main { padding: 0 24px 48px; margin-top: -48px; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.stat { background: var(--card); border-radius: var(--radius); padding: 18px 20px; box-shadow: 0 6px 20px rgba(20,32,70,.08); }
+.stat span { color: var(--muted); font-size: 13px; }
+.stat b { display: block; font-size: 28px; margin-top: 4px; }
+.grid { display: grid; grid-template-columns: 1fr 2fr; gap: 24px; align-items: start; }
+.card { background: var(--card); border-radius: var(--radius); box-shadow: 0 6px 20px rgba(20,32,70,.06); overflow: hidden; }
+.card h2 { margin: 0; font-size: 16px; font-weight: 600; padding: 18px 20px; border-bottom: 1px solid var(--line); }
+form { padding: 18px 20px; display: grid; gap: 12px; border-bottom: 1px solid var(--line); }
+form .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+label { font-size: 12px; color: var(--muted); display: grid; gap: 6px; font-weight: 500; }
+input, select, textarea { font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fbfcfe; color: var(--ink); }
+textarea { resize: vertical; min-height: 70px; }
+input:focus, select:focus, textarea:focus { outline: 2px solid rgba(47,91,234,.25); border-color: var(--brand); }
+button { font: inherit; cursor: pointer; border: 0; border-radius: 8px; padding: 10px 16px; font-weight: 600; }
+.primary { background: var(--brand); color: var(--brand-ink); }
+.primary:hover { filter: brightness(1.08); }
+.ghost { background: transparent; color: var(--danger); padding: 6px 10px; font-size: 13px; }
+.ghost:hover { background: #fdecee; }
+ul { list-style: none; margin: 0; padding: 0; }
+li { padding: 14px 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+li:last-child { border-bottom: 0; }
+.title { font-weight: 600; }
+.meta { color: var(--muted); font-size: 13px; margin-top: 4px; }
+.desc { font-size: 13px; margin-top: 6px; color: #3a4357; line-height: 1.45; }
+.tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.tag { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 999px; letter-spacing: .02em; }
+.LOW { background: #e8f5ee; color: #1f7a4a; }
+.MEDIUM { background: #eef2ff; color: #3446b5; }
+.HIGH { background: #fff3e0; color: #b35c00; }
+.CRITICAL { background: #fdecee; color: var(--danger); }
+.SUBMITTED { background: #e6f0ff; color: #1d3a9e; }
+.DRAFT { background: #f0f1f5; color: #4a5266; }
+.empty { padding: 28px 20px; text-align: center; color: var(--muted); }
+#toast { position: fixed; right: 24px; bottom: 24px; max-width: 380px; background: #2a1215; color: #fff; padding: 14px 18px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.25); font-size: 14px; opacity: 0; transform: translateY(10px); transition: .25s; pointer-events: none; }
+#toast.show { opacity: 1; transform: none; }
+@media (max-width: 860px) { .grid, .stats { grid-template-columns: 1fr 1fr; } .grid { grid-template-columns: 1fr; } }
+@media (max-width: 520px) { .stats, form .row { grid-template-columns: 1fr; } main, header { padding-left: 16px; padding-right: 16px; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="logo">SD</div>
+    <div>
+      <h1>SPL-2 Service Desk</h1>
+      <p>Client organizations and service requests</p>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="stats">
+    <div class="stat"><span>Organizations</span><b id="stat-orgs">0</b></div>
+    <div class="stat"><span>Service requests</span><b id="stat-total">0</b></div>
+    <div class="stat"><span>Submitted</span><b id="stat-submitted">0</b></div>
+    <div class="stat"><span>High or critical</span><b id="stat-urgent">0</b></div>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <h2>Client organizations</h2>
+      <form id="organization-form">
+        <label>Organization name<input name="name" required></label>
+        <label>Official contact email<input name="contact_email" type="email" required></label>
+        <button class="primary">Add organization</button>
+      </form>
+      <ul id="organizations"></ul>
+    </div>
+
+    <div class="card">
+      <h2>Service requests</h2>
+      <form id="request-form">
+        <label>Title<input name="title" required></label>
+        <label>Description<textarea name="description" required></textarea></label>
+        <div class="row">
+          <label>Organization<select name="organization" id="organization-select"></select></label>
+          <label>Priority
+            <select name="priority">
+              <option value="LOW">Low</option><option value="MEDIUM" selected>Medium</option>
+              <option value="HIGH">High</option><option value="CRITICAL">Critical</option>
+            </select>
+          </label>
+        </div>
+        <div class="row">
+          <label>Status
+            <select name="status"><option value="DRAFT">Saved</option><option value="SUBMITTED">Submitted</option></select>
+          </label>
+          <label>&nbsp;<button class="primary">Create request</button></label>
+        </div>
+      </form>
+      <ul id="requests"></ul>
+    </div>
+  </section>
+</main>
+
+<div id="toast"></div>
+
+<script>
+const STATUS = { DRAFT: "Saved", SUBMITTED: "Submitted" };
+const toast = document.getElementById("toast");
+
+function notify(message) {
+  toast.textContent = message;
+  toast.classList.add("show");
+  clearTimeout(notify.timer);
+  notify.timer = setTimeout(() => toast.classList.remove("show"), 4000);
+}
+
+async function api(method, url, body) {
+  const res = await fetch(url, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) {
+    const problem = await res.json();
+    const fields = problem.errors ? " " + Object.entries(problem.errors).map(([k, v]) => `${k} ${v}`).join("; ") : "";
+    notify(problem.detail + fields);
+    return null;
+  }
+  return res.status === 204 ? true : res.json();
+}
+
+function el(tag, attrs, ...children) {
+  const node = Object.assign(document.createElement(tag), attrs);
+  node.append(...children);
+  return node;
+}
+
+function item(main, onDelete) {
+  return el("li", {}, el("div", {}, ...main), el("button", { className: "ghost", textContent: "Delete", onclick: onDelete }));
+}
+
+function fill(list, items, emptyText) {
+  list.replaceChildren(...(items.length ? items : [el("li", { className: "empty", textContent: emptyText })]));
+}
+
+async function load() {
+  const organizations = await api("GET", "/api/organizations");
+  const requests = await api("GET", "/api/service-requests");
+  const names = Object.fromEntries(organizations.map(o => [o.id, o.name]));
+
+  document.getElementById("stat-orgs").textContent = organizations.length;
+  document.getElementById("stat-total").textContent = requests.length;
+  document.getElementById("stat-submitted").textContent = requests.filter(r => r.status === "SUBMITTED").length;
+  document.getElementById("stat-urgent").textContent = requests.filter(r => ["HIGH", "CRITICAL"].includes(r.priority)).length;
+
+  fill(document.getElementById("organizations"), organizations.map(o => item([
+    el("div", { className: "title", textContent: o.name }),
+    el("div", { className: "meta", textContent: o.contact_email }),
+  ], async () => { if (await api("DELETE", `/api/organizations/${o.id}`)) load(); })), "No organizations yet");
+
+  document.getElementById("organization-select").replaceChildren(...organizations.map(o => new Option(o.name, o.id)));
+
+  fill(document.getElementById("requests"), requests.slice().reverse().map(r => item([
+    el("div", { className: "title", textContent: r.title }),
+    el("div", { className: "meta", textContent: `SR-${1000 + r.id} · ${names[r.organization] || "Unknown organization"}` }),
+    el("div", { className: "desc", textContent: r.description }),
+    el("div", { className: "tags" },
+      el("span", { className: `tag ${r.priority}`, textContent: r.priority[0] + r.priority.slice(1).toLowerCase() }),
+      el("span", { className: `tag ${r.status}`, textContent: STATUS[r.status] })),
+  ], async () => { if (await api("DELETE", `/api/service-requests/${r.id}`)) load(); })), "No service requests yet");
+}
+
+document.getElementById("organization-form").onsubmit = async e => {
+  e.preventDefault();
+  if (await api("POST", "/api/organizations", Object.fromEntries(new FormData(e.target)))) { e.target.reset(); load(); }
+};
+
+document.getElementById("request-form").onsubmit = async e => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target));
+  data.organization = Number(data.organization);
+  if (await api("POST", "/api/service-requests", data)) { e.target.reset(); load(); }
+};
+
+load();
+</script>
+</body>
+</html>
