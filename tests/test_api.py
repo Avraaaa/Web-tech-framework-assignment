@@ -64,3 +64,9 @@ def test_submitted_request_cannot_be_deleted(client):
 def test_request_id_header(client):
     assert client.get("/api/organizations").headers["X-Request-ID"]
     assert client.get("/api/organizations", headers={"X-Request-ID": "abc"}).headers["X-Request-ID"] == "abc"
+
+
+def test_frontend_served(client):
+    r = client.get("/")
+    assert r.status_code == 200
+    assert b"SPL-2 Service Desk" in r.data

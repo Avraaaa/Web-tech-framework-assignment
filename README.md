@@ -11,6 +11,8 @@ cp .env.example .env && export $(cat .env | xargs)
 python run.py
 ```
 
+Open http://127.0.0.1:5000 for the frontend.
+
 ## Test
 
 ```bash

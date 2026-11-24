@@ -26,6 +26,10 @@ def create_app(config=None):
         app.logger.info("%s %s %s %s", g.get("request_id"), request.method, request.path, response.status_code)
         return response
 
+    @app.get("/")
+    def index():
+        return app.send_static_file("index.html")
+
     register_error_handlers(app)
     organizations = InMemoryRepository()
     app.register_blueprint(crud_blueprint("organizations", "/api/organizations", OrganizationService(organizations)))
